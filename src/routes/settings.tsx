@@ -24,6 +24,7 @@ function SettingsPage() {
   const [apiKey, setApiKey] = useState(user?.voipApiKey ?? "");
   const [apiSecret, setApiSecret] = useState(user?.voipApiSecret ?? "");
   const [voipNumber, setVoipNumber] = useState(user?.voipNumber ?? "");
+  const [connectionId, setConnectionId] = useState(user?.voipConnectionId ?? "");
   const [fetching, setFetching] = useState(false);
   const [saved, setSaved] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -35,6 +36,7 @@ function SettingsPage() {
     setApiKey(user.voipApiKey);
     setApiSecret(user.voipApiSecret);
     setVoipNumber(user.voipNumber);
+    setConnectionId(user.voipConnectionId ?? "");
   }, [user]);
 
   if (!user) return null;
@@ -72,6 +74,7 @@ function SettingsPage() {
       voipApiKey: apiKey,
       voipApiSecret: apiSecret,
       voipNumber,
+      voipConnectionId: connectionId,
     });
     setSaved(true);
     setTimeout(() => setSaved(false), 1800);
@@ -150,19 +153,33 @@ function SettingsPage() {
                 </div>
 
                 {provider === "telnyx" && (
-                  <div>
-                    <label className="text-[12px] font-medium">API secret</label>
-                    <input
-                      type="password"
-                      value={apiSecret}
-                      onChange={(e) => setApiSecret(e.target.value)}
-                      placeholder="Paste your Telnyx API secret"
-                      className="mt-1 w-full h-9 px-3 rounded-md border border-border bg-background text-[13px] outline-none focus:ring-2 focus:ring-ring/40 font-mono"
-                    />
-                    <p className="text-[11px] text-muted-foreground mt-1">
-                      Optional. Some Telnyx operations require a secret key.
-                    </p>
-                  </div>
+                  <>
+                    <div>
+                      <label className="text-[12px] font-medium">API secret</label>
+                      <input
+                        type="password"
+                        value={apiSecret}
+                        onChange={(e) => setApiSecret(e.target.value)}
+                        placeholder="Paste your Telnyx API secret"
+                        className="mt-1 w-full h-9 px-3 rounded-md border border-border bg-background text-[13px] outline-none focus:ring-2 focus:ring-ring/40 font-mono"
+                      />
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        Optional. Some Telnyx operations require a secret key.
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-[12px] font-medium">Connection ID (Call Control App)</label>
+                      <input
+                        value={connectionId}
+                        onChange={(e) => setConnectionId(e.target.value)}
+                        placeholder="e.g. 1234567890abcdef"
+                        className="mt-1 w-full h-9 px-3 rounded-md border border-border bg-background text-[13px] outline-none focus:ring-2 focus:ring-ring/40 font-mono"
+                      />
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        Required. Create a Call Control App in Telnyx portal and paste its ID here.
+                      </p>
+                    </div>
+                  </>
                 )}
 
                 <div>

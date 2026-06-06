@@ -53,14 +53,16 @@ export async function initiateCall(phone: string): Promise<CallSession> {
   const isTelnyx = user?.voipProvider === "telnyx";
   const apiKey = user?.voipApiKey;
   const fromNumber = user?.voipNumber;
+  const connectionId = user?.voipConnectionId;
 
-  if (isTelnyx && apiKey && fromNumber) {
+  if (isTelnyx && apiKey && fromNumber && connectionId) {
     try {
       const result = await makeTelnyxCall({
         data: {
           apiKey,
           from: fromNumber,
           to: phone,
+          connectionId,
         },
       });
       session.telnyxCallId = result.callId;

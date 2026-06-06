@@ -12,6 +12,7 @@ export type UserProfile = {
   voipApiKey: string;
   voipApiSecret: string;
   voipNumber: string;
+  voipConnectionId: string;
 };
 
 type AuthState = {
@@ -32,6 +33,7 @@ const DEFAULT_USER: UserProfile = {
   voipApiKey: "",
   voipApiSecret: "",
   voipNumber: "",
+  voipConnectionId: "",
 };
 
 function read(): AuthState {
