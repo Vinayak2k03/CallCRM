@@ -1,17 +1,26 @@
 /**
- * VoIP integration placeholders.
+ * VoIP integration with Telnyx.
  *
- * Replace these stubs with a Twilio / Exotel / Knowlarity / SIP provider
- * implementation when wiring up real telephony. The UI calls these and
- * reacts to the returned status transitions.
+ * When the user has configured Telnyx as their provider, calls are placed
+ * via the Telnyx API using server functions. For other providers or when
+ * disconnected, the call flow simulates status transitions locally.
  */
 import type { CallLog, CallStatus } from "./types";
+import { auth } from "./auth";
+import {
+  makeTelnyxCall,
+  getTelnyxCallDetails,
+  requestTelnyxRecording,
+  requestTelnyxTranscription,
+} from "./api/telnyx.functions";
 
 export interface CallSession {
   id: string;
   phone: string;
   status: CallStatus;
   startedAt: number;
+  telnyxCallControlId?: string;
+  telnyxCallId?: string;
 }
 
 export type CallStatusListener = (status: CallStatus) => void;
@@ -39,7 +48,55 @@ export async function initiateCall(phone: string): Promise<CallSession> {
   };
   activeSession = session;
   emit("dialing");
-  // Simulated provider flow — replace with real SDK.
+
+  const user = auth.state.user;
+  const isTelnyx = user?.voipProvider === "telnyx";
+  const apiKey = user?.voipApiKey;
+  const fromNumber = user?.voipNumber;
+
+  if (isTelnyx && apiKey && fromNumber) {
+    try {
+      const result = await makeTelnyxCall({
+        data: {
+          apiKey,
+          from: fromNumber,
+          to: phone,
+        },
+      });
+      session.telnyxCallId = result.callId;
+      session.telnyxCallControlId = result.callControlId;
+
+      // Start recording + transcription
+      if (result.callControlId) {
+        try {
+          await requestTelnyxRecording({
+            data: { apiKey, callControlId: result.callControlId, channels: "dual" },
+          });
+        } catch {
+          // ignore — recording is optional
+        }
+        try {
+          await requestTelnyxTranscription({
+            data: { apiKey, callControlId: result.callControlId },
+          });
+        } catch {
+          // ignore — transcription is optional
+        }
+      }
+
+      // Poll for status changes
+      pollTelnyxStatus(session.id, result.callControlId, apiKey);
+      return session;
+    } catch (e) {
+      console.error("Telnyx call failed:", e);
+      session.status = "ended";
+      emit("ended");
+      activeSession = null;
+      throw e;
+    }
+  }
+
+  // Simulated provider flow for non-Telnyx or missing credentials
   setTimeout(() => {
     if (activeSession?.id === session.id) {
       activeSession.status = "ringing";
@@ -52,7 +109,58 @@ export async function initiateCall(phone: string): Promise<CallSession> {
       emit("connected");
     }
   }, 2200);
+
   return session;
+}
+
+function pollTelnyxStatus(
+  sessionId: string,
+  callControlId: string,
+  apiKey: string,
+) {
+  let attempts = 0;
+  const maxAttempts = 120; // ~2 minutes at 1s intervals
+
+  const interval = setInterval(async () => {
+    attempts++;
+    if (!activeSession || activeSession.id !== sessionId || attempts > maxAttempts) {
+      clearInterval(interval);
+      return;
+    }
+
+    try {
+      const details = await getTelnyxCallDetails({
+        data: { apiKey, callControlId },
+      });
+
+      const statusMap: Record<string, CallStatus> = {
+        ringing: "ringing",
+        answered: "connected",
+        bridged: "connected",
+        completed: "ended",
+        busy: "ended",
+        failed: "ended",
+        no_answer: "missed",
+        cancelled: "ended",
+      };
+
+      const mapped = statusMap[details.status] ?? activeSession.status;
+
+      if (mapped !== activeSession.status) {
+        activeSession.status = mapped;
+        emit(mapped);
+      }
+
+      if (mapped === "ended" || mapped === "missed") {
+        clearInterval(interval);
+        setTimeout(() => {
+          activeSession = null;
+        }, 1200);
+      }
+    } catch {
+      // ignore poll errors
+    }
+  }, 1000);
 }
 
 export function endCall(): void {

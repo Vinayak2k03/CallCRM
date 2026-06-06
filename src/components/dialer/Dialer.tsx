@@ -17,6 +17,7 @@ import {
   endCall as voipEndCall,
   initiateCall as voipInitiateCall,
   onCallStatus,
+  getActiveSession,
 } from "@/lib/voip";
 import type { CallStatus, Contact } from "@/lib/types";
 import { AddContactModal } from "@/components/crm/AddContactModal";
@@ -112,6 +113,14 @@ export function Dialer() {
     });
     setCallId(log.id);
     await voipInitiateCall(number);
+    // Capture Telnyx IDs from the active session
+    const session = getActiveSession();
+    if (session?.telnyxCallId) {
+      updateCallLog(log.id, {
+        telnyxCallId: session.telnyxCallId,
+        telnyxCallControlId: session.telnyxCallControlId,
+      });
+    }
   }
 
   function hangUp() {

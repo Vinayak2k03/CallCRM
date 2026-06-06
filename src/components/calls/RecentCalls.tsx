@@ -8,9 +8,12 @@ import {
   Building2,
   User,
   Clock,
+  Headphones,
+  FileText,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import type { CallLog } from "@/lib/types";
+import { useAuth } from "@/lib/auth";
 import { AddContactModal } from "@/components/crm/AddContactModal";
 
 function timeAgo(ts: number): string {
@@ -36,8 +39,10 @@ export function RecentCalls() {
   const calls = useStore((s) => s.calls);
   const contacts = useStore((s) => s.contacts);
   const companies = useStore((s) => s.companies);
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [addPhone, setAddPhone] = useState<string | null>(null);
+  const isTelnyx = user?.voipProvider === "telnyx";
 
   return (
     <div className="bg-card border border-border rounded-xl shadow-sm flex flex-col h-full min-h-0 overflow-hidden">
@@ -114,6 +119,25 @@ export function RecentCalls() {
                       {call.notes && (
                         <div className="mt-1.5 text-[11.5px] text-muted-foreground line-clamp-2">
                           {call.notes}
+                        </div>
+                      )}
+                      {isTelnyx && call.telnyxCallControlId && (
+                        <div className="mt-1.5 flex items-center gap-2">
+                          {call.recordingUrl && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-success bg-success/10 px-1.5 py-0.5 rounded">
+                              <Headphones className="h-2.5 w-2.5" /> Recording
+                            </span>
+                          )}
+                          {call.transcript && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                              <FileText className="h-2.5 w-2.5" /> Transcript
+                            </span>
+                          )}
+                          {call.transcriptStatus === "pending" && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">
+                              <FileText className="h-2.5 w-2.5" /> Transcribing…
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>

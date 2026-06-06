@@ -2,6 +2,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   Phone,
+  PhoneCall,
   Database,
   BarChart3,
   Users,
@@ -16,7 +17,7 @@ import { useViewMode } from "@/lib/workspace";
 import { auth, useAuth } from "@/lib/auth";
 
 type Item = {
-  to: "/" | "/dashboard" | "/database";
+  to: "/" | "/dashboard" | "/database" | "/calls";
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   match: string[];
@@ -25,12 +26,14 @@ type Item = {
 const EMPLOYEE_ITEMS: Item[] = [
   { to: "/", label: "Dialer", icon: Phone, match: ["/"] },
   { to: "/database", label: "Database", icon: Database, match: ["/database"] },
+  { to: "/calls", label: "Calls", icon: PhoneCall, match: ["/calls"] },
   { to: "/dashboard", label: "My Performance", icon: BarChart3, match: ["/dashboard"] },
 ];
 
 const MANAGER_ITEMS: Item[] = [
   { to: "/dashboard", label: "Overview", icon: LayoutDashboard, match: ["/dashboard"] },
   { to: "/database", label: "Database", icon: Users, match: ["/database"] },
+  { to: "/calls", label: "Calls", icon: PhoneCall, match: ["/calls"] },
   { to: "/", label: "Dialer", icon: Phone, match: ["/"] },
 ];
 

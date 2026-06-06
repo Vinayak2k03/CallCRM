@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 
-export type VoipProvider = "callhippo" | "twilio" | "aircall" | "none";
+export type VoipProvider = "callhippo" | "twilio" | "aircall" | "telnyx" | "none";
 
 export type UserProfile = {
   userId: string; // numeric id
@@ -10,6 +10,7 @@ export type UserProfile = {
   phone: string;
   voipProvider: VoipProvider;
   voipApiKey: string;
+  voipApiSecret: string;
   voipNumber: string;
 };
 
@@ -29,6 +30,7 @@ const DEFAULT_USER: UserProfile = {
   phone: "",
   voipProvider: "callhippo",
   voipApiKey: "",
+  voipApiSecret: "",
   voipNumber: "",
 };
 

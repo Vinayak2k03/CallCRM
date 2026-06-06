@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { auth, useAuth, type VoipProvider } from "@/lib/auth";
+import { fetchTelnyxNumbers } from "@/lib/api/telnyx.functions";
 import { Check, Loader2, Phone } from "lucide-react";
 
 export const Route = createFileRoute("/settings")({
@@ -12,6 +13,7 @@ const PROVIDERS: { id: VoipProvider; label: string; description: string }[] = [
   { id: "callhippo", label: "CallHippo", description: "Cloud telephony for sales teams." },
   { id: "twilio", label: "Twilio", description: "Programmable voice via Twilio." },
   { id: "aircall", label: "Aircall", description: "Cloud-based call center." },
+  { id: "telnyx", label: "Telnyx", description: "Programmable voice, recording & transcripts." },
   { id: "none", label: "Disconnected", description: "Disable outbound VoIP." },
 ];
 
@@ -20,15 +22,18 @@ function SettingsPage() {
   const [phone, setPhone] = useState(user?.phone ?? "");
   const [provider, setProvider] = useState<VoipProvider>(user?.voipProvider ?? "callhippo");
   const [apiKey, setApiKey] = useState(user?.voipApiKey ?? "");
+  const [apiSecret, setApiSecret] = useState(user?.voipApiSecret ?? "");
   const [voipNumber, setVoipNumber] = useState(user?.voipNumber ?? "");
   const [fetching, setFetching] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
     setPhone(user.phone);
     setProvider(user.voipProvider);
     setApiKey(user.voipApiKey);
+    setApiSecret(user.voipApiSecret);
     setVoipNumber(user.voipNumber);
   }, [user]);
 
@@ -37,11 +42,26 @@ function SettingsPage() {
   async function fetchNumber() {
     if (!apiKey) return;
     setFetching(true);
-    // Simulated provider API call (CallHippo / Twilio etc.)
-    await new Promise((r) => setTimeout(r, 900));
-    const sample = "+1 415 555 " + Math.floor(1000 + Math.random() * 8999);
-    setVoipNumber(sample);
-    setFetching(false);
+    setFetchError(null);
+    try {
+      if (provider === "telnyx") {
+        const numbers = await fetchTelnyxNumbers({ data: { apiKey, limit: 10 } });
+        if (numbers.length > 0) {
+          setVoipNumber(numbers[0].phoneNumber);
+        } else {
+          setFetchError("No Telnyx numbers found on this account.");
+        }
+      } else {
+        // Simulated provider API call for other providers
+        await new Promise((r) => setTimeout(r, 900));
+        const sample = "+1 415 555 " + Math.floor(1000 + Math.random() * 8999);
+        setVoipNumber(sample);
+      }
+    } catch (e) {
+      setFetchError(e instanceof Error ? e.message : "Failed to fetch numbers");
+    } finally {
+      setFetching(false);
+    }
   }
 
   function save(e: React.FormEvent) {
@@ -50,6 +70,7 @@ function SettingsPage() {
       phone,
       voipProvider: provider,
       voipApiKey: apiKey,
+      voipApiSecret: apiSecret,
       voipNumber,
     });
     setSaved(true);
@@ -128,6 +149,22 @@ function SettingsPage() {
                   />
                 </div>
 
+                {provider === "telnyx" && (
+                  <div>
+                    <label className="text-[12px] font-medium">API secret</label>
+                    <input
+                      type="password"
+                      value={apiSecret}
+                      onChange={(e) => setApiSecret(e.target.value)}
+                      placeholder="Paste your Telnyx API secret"
+                      className="mt-1 w-full h-9 px-3 rounded-md border border-border bg-background text-[13px] outline-none focus:ring-2 focus:ring-ring/40 font-mono"
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      Optional. Some Telnyx operations require a secret key.
+                    </p>
+                  </div>
+                )}
+
                 <div>
                   <label className="text-[12px] font-medium">VoIP number</label>
                   <div className="mt-1 flex gap-2">
@@ -154,6 +191,9 @@ function SettingsPage() {
                   <p className="text-[11px] text-muted-foreground mt-1">
                     Pulls an available number from your {PROVIDERS.find((p) => p.id === provider)?.label} account.
                   </p>
+                  {fetchError && (
+                    <p className="text-[11px] text-destructive mt-1">{fetchError}</p>
+                  )}
                 </div>
               </div>
             )}

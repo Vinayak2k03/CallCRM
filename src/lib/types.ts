@@ -45,4 +45,10 @@ export interface CallLog {
   endedAt?: number;
   durationSec: number;
   notes?: string;
+  // Telnyx integration fields
+  telnyxCallId?: string;
+  telnyxCallControlId?: string;
+  recordingUrl?: string;
+  transcript?: string;
+  transcriptStatus?: "pending" | "completed" | "failed";
 }

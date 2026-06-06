@@ -14,6 +14,7 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DatabaseRouteImport } from './routes/database'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as CallsRouteImport } from './routes/calls'
 import { Route as IndexRouteImport } from './routes/index'
 
 const SettingsRoute = SettingsRouteImport.update({
@@ -41,6 +42,11 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CallsRoute = CallsRouteImport.update({
+  id: '/calls',
+  path: '/calls',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -49,6 +55,7 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/calls': typeof CallsRoute
   '/dashboard': typeof DashboardRoute
   '/database': typeof DatabaseRoute
   '/login': typeof LoginRoute
@@ -57,6 +64,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/calls': typeof CallsRoute
   '/dashboard': typeof DashboardRoute
   '/database': typeof DatabaseRoute
   '/login': typeof LoginRoute
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/calls': typeof CallsRoute
   '/dashboard': typeof DashboardRoute
   '/database': typeof DatabaseRoute
   '/login': typeof LoginRoute
@@ -76,16 +85,18 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/calls'
     | '/dashboard'
     | '/database'
     | '/login'
     | '/profile'
     | '/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/database' | '/login' | '/profile' | '/settings'
+  to: '/' | '/calls' | '/dashboard' | '/database' | '/login' | '/profile' | '/settings'
   id:
     | '__root__'
     | '/'
+    | '/calls'
     | '/dashboard'
     | '/database'
     | '/login'
@@ -95,6 +106,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CallsRoute: typeof CallsRoute
   DashboardRoute: typeof DashboardRoute
   DatabaseRoute: typeof DatabaseRoute
   LoginRoute: typeof LoginRoute
@@ -139,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/calls': {
+      id: '/calls'
+      path: '/calls'
+      fullPath: '/calls'
+      preLoaderRoute: typeof CallsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -151,6 +170,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CallsRoute: CallsRoute,
   DashboardRoute: DashboardRoute,
   DatabaseRoute: DatabaseRoute,
   LoginRoute: LoginRoute,
