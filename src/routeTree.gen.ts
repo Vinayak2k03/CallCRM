@@ -47,6 +47,11 @@ const CallsRoute = CallsRouteImport.update({
   path: '/calls',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TelnyxWebhookRoute = TelnyxWebhookRouteImport.update({
+  id: '/api/telnyx/webhook',
+  path: '/api/telnyx/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -55,6 +60,7 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/telnyx/webhook': typeof TelnyxWebhookRoute
   '/calls': typeof CallsRoute
   '/dashboard': typeof DashboardRoute
   '/database': typeof DatabaseRoute
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/telnyx/webhook': typeof TelnyxWebhookRoute
   '/calls': typeof CallsRoute
   '/dashboard': typeof DashboardRoute
   '/database': typeof DatabaseRoute
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/telnyx/webhook': typeof TelnyxWebhookRoute
   '/calls': typeof CallsRoute
   '/dashboard': typeof DashboardRoute
   '/database': typeof DatabaseRoute
@@ -85,6 +93,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/api/telnyx/webhook'
     | '/calls'
     | '/dashboard'
     | '/database'
@@ -92,10 +101,11 @@ export interface FileRouteTypes {
     | '/profile'
     | '/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/calls' | '/dashboard' | '/database' | '/login' | '/profile' | '/settings'
+  to: '/' | '/api/telnyx/webhook' | '/calls' | '/dashboard' | '/database' | '/login' | '/profile' | '/settings'
   id:
     | '__root__'
     | '/'
+    | '/api/telnyx/webhook'
     | '/calls'
     | '/dashboard'
     | '/database'
@@ -112,6 +122,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ProfileRoute: typeof ProfileRoute
   SettingsRoute: typeof SettingsRoute
+  TelnyxWebhookRoute: typeof TelnyxWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -156,6 +167,13 @@ declare module '@tanstack/react-router' {
       path: '/calls'
       fullPath: '/calls'
       preLoaderRoute: typeof CallsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/telnyx/webhook': {
+      id: '/api/telnyx/webhook'
+      path: '/api/telnyx/webhook'
+      fullPath: '/api/telnyx/webhook'
+      preLoaderRoute: typeof TelnyxWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
