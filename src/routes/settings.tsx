@@ -1,0 +1,179 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { auth, useAuth, type VoipProvider } from "@/lib/auth";
+import { Check, Loader2, Phone } from "lucide-react";
+
+export const Route = createFileRoute("/settings")({
+  head: () => ({ meta: [{ title: "Settings — Catchh" }] }),
+  component: SettingsPage,
+});
+
+const PROVIDERS: { id: VoipProvider; label: string; description: string }[] = [
+  { id: "callhippo", label: "CallHippo", description: "Cloud telephony for sales teams." },
+  { id: "twilio", label: "Twilio", description: "Programmable voice via Twilio." },
+  { id: "aircall", label: "Aircall", description: "Cloud-based call center." },
+  { id: "none", label: "Disconnected", description: "Disable outbound VoIP." },
+];
+
+function SettingsPage() {
+  const { user } = useAuth();
+  const [phone, setPhone] = useState(user?.phone ?? "");
+  const [provider, setProvider] = useState<VoipProvider>(user?.voipProvider ?? "callhippo");
+  const [apiKey, setApiKey] = useState(user?.voipApiKey ?? "");
+  const [voipNumber, setVoipNumber] = useState(user?.voipNumber ?? "");
+  const [fetching, setFetching] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    setPhone(user.phone);
+    setProvider(user.voipProvider);
+    setApiKey(user.voipApiKey);
+    setVoipNumber(user.voipNumber);
+  }, [user]);
+
+  if (!user) return null;
+
+  async function fetchNumber() {
+    if (!apiKey) return;
+    setFetching(true);
+    // Simulated provider API call (CallHippo / Twilio etc.)
+    await new Promise((r) => setTimeout(r, 900));
+    const sample = "+1 415 555 " + Math.floor(1000 + Math.random() * 8999);
+    setVoipNumber(sample);
+    setFetching(false);
+  }
+
+  function save(e: React.FormEvent) {
+    e.preventDefault();
+    auth.updateProfile({
+      phone,
+      voipProvider: provider,
+      voipApiKey: apiKey,
+      voipNumber,
+    });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1800);
+  }
+
+  return (
+    <main className="flex-1 p-4 lg:p-6">
+      <div className="max-w-3xl mx-auto">
+        <div className="mb-5">
+          <h1 className="text-[20px] font-semibold tracking-tight">Settings</h1>
+          <p className="text-[13px] text-muted-foreground">
+            Manage your phone number and VoIP provider.
+          </p>
+        </div>
+
+        <form onSubmit={save} className="space-y-5">
+          {/* Phone */}
+          <section className="rounded-xl border border-border bg-surface shadow-sm p-6">
+            <h2 className="text-[14px] font-semibold text-foreground">Phone number</h2>
+            <p className="text-[12px] text-muted-foreground">
+              Used as your caller ID fallback.
+            </p>
+            <div className="mt-4">
+              <label className="text-[12px] font-medium">Mobile / direct line</label>
+              <input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+1 415 555 0188"
+                className="mt-1 w-full h-9 px-3 rounded-md border border-border bg-background text-[13px] outline-none focus:ring-2 focus:ring-ring/40"
+              />
+            </div>
+          </section>
+
+          {/* VoIP */}
+          <section className="rounded-xl border border-border bg-surface shadow-sm p-6">
+            <h2 className="text-[14px] font-semibold text-foreground">VoIP provider</h2>
+            <p className="text-[12px] text-muted-foreground">
+              Connect a provider to place outbound calls.
+            </p>
+
+            <div className="mt-4 grid sm:grid-cols-2 gap-2">
+              {PROVIDERS.map((p) => {
+                const active = provider === p.id;
+                return (
+                  <button
+                    type="button"
+                    key={p.id}
+                    onClick={() => setProvider(p.id)}
+                    className={[
+                      "text-left rounded-lg border px-3 py-2.5 transition-colors",
+                      active
+                        ? "border-primary bg-primary/5"
+                        : "border-border bg-surface hover:bg-secondary/60",
+                    ].join(" ")}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[13px] font-medium">{p.label}</span>
+                      {active && <Check className="h-3.5 w-3.5 text-primary" />}
+                    </div>
+                    <p className="text-[11.5px] text-muted-foreground mt-0.5">{p.description}</p>
+                  </button>
+                );
+              })}
+            </div>
+
+            {provider !== "none" && (
+              <div className="mt-5 space-y-4">
+                <div>
+                  <label className="text-[12px] font-medium">API key</label>
+                  <input
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    placeholder="Paste your provider API key"
+                    className="mt-1 w-full h-9 px-3 rounded-md border border-border bg-background text-[13px] outline-none focus:ring-2 focus:ring-ring/40 font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[12px] font-medium">VoIP number</label>
+                  <div className="mt-1 flex gap-2">
+                    <input
+                      value={voipNumber}
+                      onChange={(e) => setVoipNumber(e.target.value)}
+                      placeholder="Fetched from provider"
+                      className="flex-1 h-9 px-3 rounded-md border border-border bg-background text-[13px] outline-none focus:ring-2 focus:ring-ring/40"
+                    />
+                    <button
+                      type="button"
+                      onClick={fetchNumber}
+                      disabled={!apiKey || fetching}
+                      className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-border bg-surface text-[12px] font-medium hover:bg-secondary/60 disabled:opacity-50"
+                    >
+                      {fetching ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Phone className="h-3.5 w-3.5" />
+                      )}
+                      Fetch
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Pulls an available number from your {PROVIDERS.find((p) => p.id === provider)?.label} account.
+                  </p>
+                </div>
+              </div>
+            )}
+          </section>
+
+          <div className="flex items-center justify-end gap-3">
+            {saved && (
+              <span className="text-[12px] text-success inline-flex items-center gap-1">
+                <Check className="h-3.5 w-3.5" /> Saved
+              </span>
+            )}
+            <button
+              type="submit"
+              className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-[13px] font-medium hover:opacity-95"
+            >
+              Save changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </main>
+  );
+}
